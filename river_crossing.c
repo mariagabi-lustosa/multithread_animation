@@ -6,6 +6,7 @@
 #define NUM_HACKERS 4
 #define NUM_SERFS 4
 #define BOAT_CAPACITY 4
+#define MIXED_GROUP_SIZE (BOAT_CAPACITY / 2)
 
 int hackers = 0; // number of hackers wainting to board
 int serfs = 0; // number of serfs wainting to board
@@ -24,6 +25,12 @@ void rowBoat(const char *captain_type, int id) {
     printf("%s %d is rowing the boat.\n", captain_type, id);
 }
 
+void signal_queue(sem_t *queue, int count) {
+    for (int i = 0; i < count; i++) {
+        sem_post(queue);
+    }
+}
+
 
 void *hacker_routine(void *arg) {
     int id = *(int *)arg;
@@ -33,19 +40,15 @@ void *hacker_routine(void *arg) {
     sem_wait(&mutex);
     hackers++;
 
-    if (hackers == 4) {
-        hackers -= 4;
-        for (int i = 0; i < 4; i++) {
-            sem_post(&hackerQueue); // signal 4 hackers to board
-        }
+    if (hackers == BOAT_CAPACITY) {
+        hackers -= BOAT_CAPACITY;
+        signal_queue(&hackerQueue, BOAT_CAPACITY); // signal BOAT_CAPACITY hackers to board
         isCaptain = 1; // set captain flag
-    } else if (hackers >= 2 && serfs >= 2) {
-        hackers -= 2;
-        serfs -= 2;
-        for (int i = 0; i < 2; i++) {
-            sem_post(&hackerQueue); // signal 2 hackers to board
-            sem_post(&serfQueue); // signal 2 serfs to board
-        }
+    } else if (hackers >= MIXED_GROUP_SIZE && serfs >= MIXED_GROUP_SIZE) {
+        hackers -= MIXED_GROUP_SIZE;
+        serfs -= MIXED_GROUP_SIZE;
+        signal_queue(&hackerQueue, MIXED_GROUP_SIZE); // signal MIXED_GROUP_SIZE hackers to board
+        signal_queue(&serfQueue, MIXED_GROUP_SIZE); // signal MIXED_GROUP_SIZE serfs to board
         isCaptain = 1; // set captain flag
     } else {
         sem_post(&mutex);
@@ -72,19 +75,15 @@ void *serf_routine(void *arg) {
     sem_wait(&mutex);
     serfs++;
 
-    if (serfs == 4) {
-        serfs -= 4;
-        for (int i = 0; i < 4; i++) {
-            sem_post(&serfQueue); // signal 4 serfs to board
-        }
+    if (serfs == BOAT_CAPACITY) {
+        serfs -= BOAT_CAPACITY;
+        signal_queue(&serfQueue, BOAT_CAPACITY); // signal BOAT_CAPACITY serfs to board
         isCaptain = 1; // set captain flag
-    } else if (hackers >= 2 && serfs >= 2) {
-        hackers -= 2;
-        serfs -= 2;
-        for (int i = 0; i < 2; i++) {
-            sem_post(&hackerQueue); // signal 2 hackers to board
-            sem_post(&serfQueue); // signal 2 serfs to board
-        }
+    } else if (hackers >= MIXED_GROUP_SIZE && serfs >= MIXED_GROUP_SIZE) {
+        hackers -= MIXED_GROUP_SIZE;
+        serfs -= MIXED_GROUP_SIZE;
+        signal_queue(&hackerQueue, MIXED_GROUP_SIZE); // signal MIXED_GROUP_SIZE hackers to board
+        signal_queue(&serfQueue, MIXED_GROUP_SIZE); // signal MIXED_GROUP_SIZE serfs to board
         isCaptain = 1; // set captain flag
     }
     else {
@@ -107,6 +106,12 @@ void *serf_routine(void *arg) {
 int main(void) {
     int hacker_ids[NUM_HACKERS];
     int serf_ids[NUM_SERFS];
+
+    // verify if the number of hackers and serfs is a multiple of the boat capacity
+    if (NUM_HACKERS % MIXED_GROUP_SIZE != 0 || NUM_SERFS % MIXED_GROUP_SIZE != 0 || (NUM_HACKERS + NUM_SERFS) % BOAT_CAPACITY != 0) {
+        fprintf(stderr, "Numbers of hackers and serfs must be even, and their total must be a multiple of %d.\n", BOAT_CAPACITY);
+        return 1;
+    }
 
     // initialize semaphores and barrier
     if (sem_init(&mutex, 0, 1) == -1) {
@@ -139,26 +144,61 @@ int main(void) {
 
     for (int i = 0; i < NUM_HACKERS; i++) {
         hacker_ids[i] = i+1;
-        pthread_create(&hacker_thread[i], NULL, hacker_routine, &hacker_ids[i]);    }
+        error = pthread_create(&hacker_thread[i], NULL, hacker_routine, &hacker_ids[i]);
+        if (error != 0) {
+            fprintf(stderr, "pthread_create hacker_thread[%d]: %s\n", hacker_ids[i], strerror(error));
+            return 1;
+        }
+    }
 
     for (int i = 0; i < NUM_SERFS; i++) {
         serf_ids[i] = i+1;
-        pthread_create(&serf_thread[i], NULL, serf_routine, &serf_ids[i]);
+        error = pthread_create(&serf_thread[i], NULL, serf_routine, &serf_ids[i]);
+        if (error != 0) {
+            fprintf(stderr, "pthread_create serf_thread[%d]: %s\n", serf_ids[i], strerror(error));
+            return 1;
+        }
     }
 
     for (int i = 0; i < NUM_HACKERS; i++) {
-        pthread_join(hacker_thread[i], NULL);
+        error = pthread_join(hacker_thread[i], NULL);
+        if (error != 0) {
+            fprintf(stderr, "pthread_join hacker_thread[%d]: %s\n", hacker_ids[i], strerror(error));
+            return 1;
+        }
     }
 
     for (int i = 0; i < NUM_SERFS; i++) {
-        pthread_join(serf_thread[i], NULL);
+        error = pthread_join(serf_thread[i], NULL);
+        if (error != 0) {
+            fprintf(stderr, "pthread_join serf_thread[%d]: %s\n", serf_ids[i], strerror(error));
+            return 1;
+        }
     }
 
-    // destroy semaphores and barrier
-    pthread_barrier_destroy(&barrier);
-    sem_destroy(&serfQueue);
-    sem_destroy(&hackerQueue);
-    sem_destroy(&mutex);
+    int exit_status = 0;
 
-    return 0;
+    // destroy semaphores and barrier
+    error = pthread_barrier_destroy(&barrier);
+    if (error != 0) {
+        fprintf(stderr, "pthread_barrier_destroy: %s\n", strerror(error));
+        exit_status = 1;
+    }
+    error = sem_destroy(&serfQueue);
+    if (error == -1) {
+        perror("sem_destroy serfQueue");
+        exit_status = 1;
+    }
+    error = sem_destroy(&hackerQueue);
+    if (error == -1) {
+        perror("sem_destroy hackerQueue");
+        exit_status = 1;
+    }
+    error = sem_destroy(&mutex);
+    if (error == -1) {
+        perror("sem_destroy mutex");
+        exit_status = 1;
+    }
+
+    return exit_status;
 }
