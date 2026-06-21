@@ -1,6 +1,11 @@
 #include <stdio.h>
+#include <string.h>
 #include <semaphore.h>
 #include <pthread.h>
+
+#define NUM_HACKERS 4
+#define NUM_SERFS 4
+#define BOAT_CAPACITY 4
 
 int hackers = 0; // number of hackers wainting to board
 int serfs = 0; // number of serfs wainting to board
@@ -99,39 +104,61 @@ void *serf_routine(void *arg) {
 }
 
 
-int main() {
-    int hacker_ids[4];
-    int serf_ids[4];
+int main(void) {
+    int hacker_ids[NUM_HACKERS];
+    int serf_ids[NUM_SERFS];
 
     // initialize semaphores and barrier
-    sem_init(&mutex, 0, 1);
-    sem_init(&hackerQueue, 0, 0);
-    sem_init(&serfQueue, 0, 0);
-    pthread_barrier_init(&barrier, NULL, 4); // barrier for 4 passengers
+    if (sem_init(&mutex, 0, 1) == -1) {
+        perror("sem_init mutex");
+        return 1;
+    }
+    if (sem_init(&hackerQueue, 0, 0) == -1) {
+        perror("sem_init hackerQueue");
+        sem_destroy(&mutex);
+        return 1;
+    }
+    if (sem_init(&serfQueue, 0, 0) == -1) {
+        perror("sem_init serfQueue");
+        sem_destroy(&hackerQueue);
+        sem_destroy(&mutex);
+        return 1;
+    }
+    int error = pthread_barrier_init(&barrier, NULL, BOAT_CAPACITY);    
+    if (error != 0) {
+        fprintf(stderr, "pthread_barrier_init: %s\n", strerror(error));
+        sem_destroy(&serfQueue);
+        sem_destroy(&hackerQueue);
+        sem_destroy(&mutex);
+        return 1;
+    }
 
-    // Create threads for hackers and serfs
-    pthread_t hacker_thread[4];
-    pthread_t serf_thread[4];
+    // create threads for hackers and serfs
+    pthread_t hacker_thread[NUM_HACKERS];
+    pthread_t serf_thread[NUM_SERFS];
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_HACKERS; i++) {
         hacker_ids[i] = i+1;
+        pthread_create(&hacker_thread[i], NULL, hacker_routine, &hacker_ids[i]);    }
+
+    for (int i = 0; i < NUM_SERFS; i++) {
         serf_ids[i] = i+1;
-        pthread_create(&hacker_thread[i], NULL, hacker_routine, &hacker_ids[i]);
         pthread_create(&serf_thread[i], NULL, serf_routine, &serf_ids[i]);
     }
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_HACKERS; i++) {
         pthread_join(hacker_thread[i], NULL);
+    }
+
+    for (int i = 0; i < NUM_SERFS; i++) {
         pthread_join(serf_thread[i], NULL);
     }
 
-    // Wait for threads to finish (not shown)
-
     // destroy semaphores and barrier
-    sem_destroy(&mutex);
-    sem_destroy(&hackerQueue);
-    sem_destroy(&serfQueue);
     pthread_barrier_destroy(&barrier);
+    sem_destroy(&serfQueue);
+    sem_destroy(&hackerQueue);
+    sem_destroy(&mutex);
 
     return 0;
 }
