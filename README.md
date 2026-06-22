@@ -6,4 +6,5 @@ This project was developed as part of the MC504 course at Unicamp
 ```
 gcc -Wall -Wextra -pthread river_crossing.c -o river_crossing
 ./river_crossing river_crossing.c
+./river_crossing | python3 visualizador.py
 ```
