@@ -8,7 +8,7 @@ gcc -Wall -Wextra -pthread river_crossing.c -o river_crossing
 ./river_crossing river_crossing.c
 
 ```
-
+para o pygames:
 ```
 pip install pygame
 
