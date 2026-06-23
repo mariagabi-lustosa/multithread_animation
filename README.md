@@ -17,4 +17,12 @@ sudo apt update && sudo apt install python3-pygame
 
 gcc -pthread river_crossing.c -o river_crossing
 ./river_crossing | python3 visualizador.py
+
 ```
+## Criando Env para instalar o pygame
+```
+python3 -m venv ~/multithread_animation/
+
+source bin/activate
+```
+
