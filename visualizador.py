@@ -56,6 +56,11 @@ def add_log(message, color=COLOR_TEXT_MAIN):
     event_logs.append((f"{curr_time} {message}", color))
     if (len(event_logs) > max):
         event_logs.pop(0)
+#final vars
+finished = False
+total_h = 0
+total_s = 0
+total_trips = 0
 # Entity Class
 class Entity:
     def __init__(self, id, type, current_x, current_y):
@@ -214,6 +219,25 @@ def draw_boat_and_passengers():
                 entity.target_y = seat_y
                 
             entity.draw()
+def draw_final():
+    #screen
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 210))
+    screen.blit(overlay, (0, 0))
+    # central box
+    box_width, box_height = 400, 260
+    start_x = (SCREEN_WIDTH - box_width) // 2
+    start_y = (SCREEN_HEIGHT - box_height) // 2
+    pygame.draw.rect(screen, (30, 40, 60), (start_x, start_y, box_width, box_height), border_radius=10)
+    pygame.draw.rect(screen, COLOR_RIVER, (start_x, start_y, box_width, box_height), width=2, border_radius=10)
+ 
+    # Text and analytics
+    title = font_title.render("Finish", True, (255, 215, 0))
+    screen.blit(title, (start_x + box_width//2 - title.get_width()//2, start_y + 30))
+    screen.blit(font_bank.render(f"Total Number of Hackers: {total_h}", True, COLOR_HACKER), (start_x + 60, start_y + 90))
+    screen.blit(font_bank.render(f"Total Number of Serfs: {total_s}", True, COLOR_SERF), (start_x + 60, start_y + 130))
+    screen.blit(font_bank.render(f"Trips Realized: {total_trips}", True, COLOR_TEXT_MAIN), (start_x + 60, start_y + 170))
+
 def organize_waiting_queues():
     # grid organizado na margem esquerda para as filas de espera
     start_x, start_y, gap = 60, 200, 45
@@ -300,6 +324,7 @@ while running:
             elif action == "REMOU":
                 boat_status_text = f"CRUISING - CAPTAIN: {p_type} {idx} ROWING"
                 boat_is_rowing = True
+                total_trips += 1
                 add_log(f"Travel started (Leader: {p_type} {idx}).", (255, 215, 0))
 
             elif action == "STATUS":
@@ -308,6 +333,12 @@ while running:
                 if key in sys_state:
                     sys_state[key] = value 
                 add_log(f"OS Kernel -> {key.upper()} changed to {value}", COLOR_TEXT_MUTED)
+
+            elif action == "Final":
+                total_h = int(parts[1])
+                total_s = int(parts[2])
+                finished = True
+                add_log("Code Finished", (255,215,0))
 
     except queue.Empty:
         pass
@@ -333,6 +364,8 @@ while running:
     draw_boat_and_passengers()
     draw_system()
     draw_logs()
+    if finished and not boat_is_rowing and len(boat_list) == 0:
+        draw_final()
     
     pygame.display.flip()
     clock.tick(60)
