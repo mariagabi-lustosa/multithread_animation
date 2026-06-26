@@ -14,13 +14,15 @@ python3 -m venv ~/multithread_animation/
 
 source bin/activate
 ```
-## para o pygames:
+## To install:
 ```
 pip install pygame
 
 sudo apt update && sudo apt install python3-pygame
+```
 
+## To compile and run:
+```
 gcc -pthread river_crossing.c -o river_crossing
 ./river_crossing | python3 visualizador.py
-
 ```
