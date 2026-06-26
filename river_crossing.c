@@ -199,6 +199,9 @@ int main(void) {
         }
     }
 
+    printf("Finish - %d:%d%d\n", NUM_HACKERS, NUM_SERFS);
+    fflush(stdout); //sincroniza E/S
+
     int exit_status = 0;
 
     // destroy semaphores and barrier
