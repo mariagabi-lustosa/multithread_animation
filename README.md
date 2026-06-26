@@ -8,7 +8,12 @@ gcc -Wall -Wextra -pthread river_crossing.c -o river_crossing
 ./river_crossing river_crossing.c
 
 ```
+## Creating a Env to install the pygames
+```
+python3 -m venv ~/multithread_animation/
 
+source bin/activate
+```
 ## para o pygames:
 ```
 pip install pygame
@@ -19,10 +24,3 @@ gcc -pthread river_crossing.c -o river_crossing
 ./river_crossing | python3 visualizador.py
 
 ```
-## Criando Env para instalar o pygame
-```
-python3 -m venv ~/multithread_animation/
-
-source bin/activate
-```
-
