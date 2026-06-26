@@ -1,13 +1,6 @@
 # multithread_animation
 This project was developed as part of the MC504 course at Unicamp
 
-
-## How to compile and run
-```
-gcc -Wall -Wextra -pthread river_crossing.c -o river_crossing
-./river_crossing river_crossing.c
-
-```
 ## Creating a Env to install the pygames
 ```
 python3 -m venv ~/multithread_animation/
@@ -20,9 +13,9 @@ pip install pygame
 
 sudo apt update && sudo apt install python3-pygame
 ```
-
-## To compile and run:
+## How to compile and run
 ```
-gcc -pthread river_crossing.c -o river_crossing
-./river_crossing | python3 visualizador.py
+gcc -Wall -Wextra -pthread river_crossing.c -o river_crossing
+./river_crossing river_crossing.c
+
 ```
