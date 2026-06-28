@@ -11,16 +11,16 @@ SCREEN_HEIGHT = 650
 
 # graphics
 COLOR_BG = (18, 24, 38)          # background
-COLOR_RIVER_BED = (26, 36, 56)    # Fundo do rio
-COLOR_RIVER = (0, 180, 216)       # \água
-COLOR_HACKER = (57, 255, 20)      # hackler
+COLOR_RIVER_BED = (26, 36, 56)    # river bed
+COLOR_RIVER = (0, 180, 216)       # water
+COLOR_HACKER = (57, 255, 20)      # hacker
 COLOR_SERF = (255, 7, 58)         # serf
-COLOR_BOAT = (197, 137, 64)       # barco
-COLOR_BOAT_DARK = (141, 91, 35)   # barco sombra
-COLOR_TEXT_MAIN = (248, 249, 250) # texto
-COLOR_TEXT_MUTED = (108, 117, 125)# texto 2   mudar isso dps  ta feio
+COLOR_BOAT = (197, 137, 64)       # boat
+COLOR_BOAT_DARK = (141, 91, 35)   # boat shadow
+COLOR_TEXT_MAIN = (248, 249, 250) # main text
+COLOR_TEXT_MUTED = (108, 117, 125)# secondary text
 
-# Inicializando o jogo
+# Initializing pygame
 pygame.init()
 pygame.display.set_caption("MC504 - Multithread River Crossing Visualizer") #title
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -41,7 +41,7 @@ boat_status_text = "DOCKING - WAITING FOR PASSENGERS"
 boat_is_rowing = False
 animation_speed = 2
 input_command_queue = queue.Queue()
-wave_offset = 0 # p animar a correnteza do rio
+wave_offset = 0 # for animating the river current
 
 sys_state = {
     "mutex":"UNLOCKED",
@@ -65,7 +65,7 @@ total_trips = 0
 class Entity:
     def __init__(self, id, type, current_x, current_y):
         self.id = id
-        self.type = type # HACKER ou SERF
+        self.type = type # HACKER or SERF
         #position 
         self.x = current_x
         self.y = current_y
@@ -94,7 +94,7 @@ class Entity:
         screen.blit(id_surf, id_rect)
 
     def update(self):
-        # movimento com interpolação exponencial
+        # exponential interpolation movement
         self.x += (self.target_x - self.x) * 0.12
         self.y += (self.target_y - self.y) * 0.12
 
@@ -116,19 +116,19 @@ def draw_environment():
         pygame.draw.line(screen, (255, 255, 255, 40), (river_x + 200, y_pos - 15), (river_x + 240, y_pos - 5), 2)
         pygame.draw.line(screen, (255, 255, 255, 40), (river_x + 320, y_pos + 10), (river_x + 350, y_pos + 20), 2)
 
-    # desenha os píers de pro barquinho
-    pygame.draw.rect(screen, (45, 55, 72), (250, (SCREEN_HEIGHT // 2) - 60, 100, 120), border_radius=5) # Píer esquerdo
-    pygame.draw.rect(screen, (45, 55, 72), (750, (SCREEN_HEIGHT // 2) - 60, 100, 120), border_radius=5) # Píer direito
+    # draws the piers
+    pygame.draw.rect(screen, (45, 55, 72), (250, (SCREEN_HEIGHT // 2) - 60, 100, 120), border_radius=5) # left pier
+    pygame.draw.rect(screen, (45, 55, 72), (750, (SCREEN_HEIGHT // 2) - 60, 100, 120), border_radius=5) # right pier
 
-    # cabeçalho e textos
+    # header and labels
     title_surf = font_title.render("RIVER CROSSING VISUALIZER", True, COLOR_TEXT_MAIN)
     screen.blit(title_surf, (50, 30))
     
     sub_surf = font_status.render("Operating Systems Project - Unicamp", True, COLOR_TEXT_MUTED)
     screen.blit(sub_surf, (50, 75))
     
-    screen.blit(font_bank.render("LEFT BANK", True, COLOR_TEXT_MAIN), (50, 140))
-    screen.blit(font_bank.render("RIGHT BANK", True, COLOR_TEXT_MAIN), (SCREEN_WIDTH - 200, 140))
+    screen.blit(font_bank.render("LEFT BANK", True, COLOR_TEXT_MAIN), (50, 130))
+    screen.blit(font_bank.render("RIGHT BANK", True, COLOR_TEXT_MAIN), (SCREEN_WIDTH - 200, 130))
 
 def draw_system():
     width = 2
@@ -148,7 +148,7 @@ def draw_system():
     screen.blit(font_status.render(f"Barrier: {sys_state['barrier']}", True, barrier_color), (begin_x + 15, begin_y + 70))
 
 def draw_logs():
-    width = 420
+    width = 450
     height = 150
     begin_x = 50
     begin_y = SCREEN_HEIGHT - height - 10
@@ -172,18 +172,18 @@ def draw_boat_and_passengers():
     boat_height = 70
     boat_y = (SCREEN_HEIGHT // 2) - (boat_height // 2)
     
-    # desenha o formato do barco
+    # draws the boat shape
     points = [
         (boat_current_x, boat_y + 10),
         (boat_current_x + boat_width - 30, boat_y),
-        (boat_current_x + boat_width, boat_y + boat_height // 2), # Bico
+        (boat_current_x + boat_width, boat_y + boat_height // 2), # bow
         (boat_current_x + boat_width - 30, boat_y + boat_height),
         (boat_current_x, boat_y + boat_height - 10)
     ]
-    pygame.draw.polygon(screen, COLOR_BOAT_DARK, [(p[0], p[1] + 5) for p in points]) # Sombra
+    pygame.draw.polygon(screen, COLOR_BOAT_DARK, [(p[0], p[1] + 5) for p in points]) # shadow
     pygame.draw.polygon(screen, COLOR_BOAT, points)
-    
-    # desenha os banquinhos do barco
+
+    # draws the boat seats
     seat_positions = [
         (boat_current_x + 25,  boat_y + boat_height // 2),
         (boat_current_x + 60,  boat_y + boat_height // 2),
@@ -195,24 +195,23 @@ def draw_boat_and_passengers():
         bx, by = seat_positions[i]
         pygame.draw.rect(screen, COLOR_BOAT_DARK, (bx - 12, boat_y + 12, 24, boat_height - 24), border_radius=3)
 
-    # flutuando barco em X
+    # boat status label floating above
     status_surf = font_status.render(boat_status_text, True, (255, 215, 0) if "CRUISING" in boat_status_text else COLOR_TEXT_MAIN)
     status_rect = status_surf.get_rect(center=(boat_current_x + boat_width // 2, boat_y - 25))
     screen.blit(status_surf, status_rect)
     
-    # atualiza e desenha os passageiros nos assentos corretos
+    # updates and draws passengers in their correct seats
     for i, entity in enumerate(boat_list):
         if i < 4:
             seat_x, seat_y = seat_positions[i]
-            
-            # se o barco estiver parado carregando, o boneco vai flutuando até o assento
+
+            # while docked and boarding, entity floats smoothly to its seat
             if not boat_is_rowing:
                 entity.target_x = seat_x
                 entity.target_y = seat_y
                 entity.update()
             else:
-                # se o barco tiver andando., boneco trava instantaneamente no assento
-                # para não dar efeito de "atraso" ou ficar flutuando fora
+                # while rowing, snap to seat to avoid lag or floating outside the boat
                 entity.x = seat_x
                 entity.target_x = seat_x
                 entity.y = seat_y
@@ -239,33 +238,33 @@ def draw_final():
     screen.blit(font_bank.render(f"Trips Realized: {total_trips}", True, COLOR_TEXT_MAIN), (start_x + 60, start_y + 170))
 
 def organize_waiting_queues():
-    # grid organizado na margem esquerda para as filas de espera
-    start_x, start_y, gap = 60, 200, 45
+    # organized grid on the left bank for the waiting queues
+    start_x, start_y, gap = 50, 200, 45
     
-    # Render dos Hackers
+    # render hackers
     hacker_label = font_status.render(f"Hackers Waiting: {len(hacker_queue_list)}", True, COLOR_HACKER)
-    screen.blit(hacker_label, (start_x, start_y - 25))
+    screen.blit(hacker_label, (start_x, start_y - 35))
     for i, hacker in enumerate(hacker_queue_list):
         row = i // 5
         col = i % 5
-        hacker.target_x = start_x + (col * gap)
+        hacker.target_x = start_x + hacker.radius + (col * gap)
         hacker.target_y = start_y + (row * gap)
         hacker.update()
         hacker.draw()
 
-    # render dos Serfs 
+    # render serfs
     serf_start_y = 420
     serf_label = font_status.render(f"Serfs Waiting: {len(serf_queue_list)}", True, COLOR_SERF)
-    screen.blit(serf_label, (start_x, serf_start_y - 25))
+    screen.blit(serf_label, (start_x, serf_start_y - 35))
     for i, serf in enumerate(serf_queue_list):
         row = i // 5
         col = i % 5
-        serf.target_x = start_x + (col * gap)
+        serf.target_x = start_x + serf.radius + (col * gap)
         serf.target_y = serf_start_y + (row * gap)
         serf.update()
         serf.draw()
 
-# input Reading Thread (link com o cod river_crossing
+# input reading thread — reads stdout from river_crossing and enqueues events
 def read_input_thread():
     for line in sys.stdin:
         line = line.strip()
@@ -277,23 +276,23 @@ def read_input_thread():
 thread = threading.Thread(target=read_input_thread, daemon=True)
 thread.start()
 
-# loop do jogo
+# game loop
 running = True
-target_dock_x = 590   # ponto de parada na margem direita
-original_dock_x = 120 # P]ponto de parada na margem esquerda
+target_dock_x = 590   # right bank docking position
+original_dock_x = 120 # left bank docking position
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
             
-    # processamento de comandos da fila assíncrona
+    # process commands from the async queue
     try:
         while True:
             parts = input_command_queue.get_nowait()
             action, p_type, idx = parts[0], parts[1].upper(), parts[2]
             
-            if action == "CHEGOU":
+            if action == "ARRIVED":
                 
                 target_y_pos = 200 if p_type == 'HACKER' else 420
                 new_entity = Entity(idx, p_type, current_x=-40, current_y=target_y_pos)
@@ -305,7 +304,7 @@ while running:
                 cor = COLOR_HACKER if p_type == 'HACKER' else COLOR_SERF
                 add_log(f"Thread created: {p_type} {idx} waiting.", cor)
                     
-            elif action == "EMBARCOU":
+            elif action == "BOARDED":
                 if p_type == "HACKER":
                     for ent in hacker_queue_list:
                         if ent.id == idx:
@@ -321,7 +320,7 @@ while running:
                 boat_status_text = f"PASSENGERS BOARDING ({len(boat_list)}/4)"
                 add_log(f"Signal recieved: {p_type} {idx} joined to the boat.", COLOR_TEXT_MAIN)
                 
-            elif action == "REMOU":
+            elif action == "ROWED":
                 boat_status_text = f"CRUISING - CAPTAIN: {p_type} {idx} ROWING"
                 boat_is_rowing = True
                 total_trips += 1
@@ -343,7 +342,7 @@ while running:
     except queue.Empty:
         pass
 
-    # travessia do barco
+    # boat crossing animation
     if boat_is_rowing:
         if boat_current_x < target_dock_x:
             boat_current_x += animation_speed

@@ -4,3 +4,5 @@ lib/
 lib64/
 /pyvenv.cfg
 /river_crossing
+threads/river_crossing
+__pycache__/

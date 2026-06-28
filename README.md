@@ -1,21 +1,39 @@
 # multithread_animation
-This project was developed as part of the MC504 course at Unicamp
 
-## Creating a Env to install the pygames
-```
-python3 -m venv ~/multithread_animation/
+River crossing problem with multithreading visualization. This project was developed as part of the MC504 course at Unicamp.
 
-source bin/activate
+## Structure
+
 ```
-## To install:
+threads/    - C implementation (river_crossing.c, river_crossing.h, main.c)
+animation/  - Python visualizer (main.py, renderer.py, entity.py, config.py)
 ```
+
+## Setup
+
+Create and activate a virtual environment, then install pygame:
+
+```bash
+python3 -m venv ~/multithread_animation
+
+# bash
+source ~/multithread_animation/bin/activate
+
+# fish
+source ~/multithread_animation/bin/activate.fish
+
 pip install pygame
-
-sudo apt update && sudo apt install python3-pygame
 ```
-## How to compile and run
-```
-gcc -Wall -Wextra -pthread river_crossing.c -o river_crossing
-./river_crossing river_crossing.c
 
+## Compile
+
+```bash
+cd threads
+gcc -Wall -Wextra -pthread main.c river_crossing.c -o river_crossing
+```
+
+## Run
+
+```bash
+./threads/river_crossing | ~/multithread_animation/bin/python3 animation/main.py
 ```
