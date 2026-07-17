@@ -54,8 +54,9 @@ A aplicação não se limita ao print de mensagens textuais no terminal. Um segu
 ## Compilação e Execução
 
 ### Criando `venv` para instalar a biblioteca Pygame (Opcional)
+Execute a partir da raiz do projeto (`multithread_animation/`):
 ```
-python3 -m venv ~/multithread_animation/
+python3 -m venv .
 
 source bin/activate
 ```
@@ -67,13 +68,14 @@ sudo apt update && sudo apt install python3-pygame
 ```
 
 ### Como compilar o código do River Crossing
+Execute a partir da raiz do projeto (`multithread_animation/`):
 ```
-gcc -Wall -Wextra -pthread river_crossing.c -o river_crossing
+gcc -Wall -Wextra -pthread threads/main.c threads/river_crossing.c -o river_crossing
 
 ```
 
 
 ### Rodando o código do River Crossing e a Animação
 ```
-./river_crossing | python3 visualizer.py
+./river_crossing | python3 animation/main.py
 ```
