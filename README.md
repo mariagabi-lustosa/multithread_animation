@@ -11,6 +11,10 @@
 
 ---
 
+<p align="center">
+  <img src="river_crossing.gif" alt="Demonstração da animação River Crossing" width="700" />
+</p>
+
 ## Índice
 - [Sobre o Projeto](#-sobre-o-projeto)
 - [O Problema: Travessia do Rio](#-o-problema-travessia-do-rio)
