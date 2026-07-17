@@ -6,11 +6,13 @@
 #include "river_crossing.h"
 
 int main(void) {
+    // enforces that group sizes must be multiples of 2 and the total must be a multiple of 4
     if (NUM_HACKERS % MIXED_GROUP_SIZE != 0 || NUM_SERFS % MIXED_GROUP_SIZE != 0 || (NUM_HACKERS + NUM_SERFS) % BOAT_CAPACITY != 0) {
         fprintf(stderr, "Numbers of hackers and serfs must be even, and their total must be a multiple of %d.\n", BOAT_CAPACITY);
         return 1;
     }
 
+    // initializes the synchronization primitives shared by all threads
     if (sem_init(&mutex, 0, 1) == -1) {
         perror("sem_init mutex");
         return 1;
@@ -46,6 +48,7 @@ int main(void) {
     int serfs_created = 0;
     int total_threads = NUM_HACKERS + NUM_SERFS;
 
+    // creates the threads in random, spaced-out order to simulate passengers arriving gradually
     for (int i = 0; i < total_threads; i++) {
         if ((rand() % 2 == 0 && hackers_created < NUM_HACKERS) || serfs_created == NUM_SERFS) {
             hacker_args[hackers_created] = (PassengerArgs){ hackers_created + 1, ROLE_HACKER };
@@ -68,6 +71,7 @@ int main(void) {
         usleep(2000000);
     }
 
+    // waits for every thread to finish before reporting the final result
     for (int i = 0; i < NUM_HACKERS; i++) {
         error = pthread_join(hacker_thread[i], NULL);
         if (error != 0) {
@@ -84,9 +88,11 @@ int main(void) {
         }
     }
 
+    // signals the visualizer that the simulation has ended
     printf("Final:%d:%d\n", NUM_HACKERS, NUM_SERFS);
     fflush(stdout);
 
+    // releases the synchronization resources allocated earlier
     int exit_status = 0;
 
     error = pthread_barrier_destroy(&barrier);
